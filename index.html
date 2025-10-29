@@ -1,0 +1,40 @@
+<html>
+<body>
+    <script src="https://js.puter.com/v2/"></script>
+    <script>
+    (async () => {
+        // Gemini 2.5 Pro
+        const pro_resp = await puter.ai.chat(
+            'Tell me something interesting about quantum mechanics.',
+            {model: 'google/gemini-2.5-pro-preview1'}
+        );
+        document.write('<h2>Gemini 2.5 Pro Response:</h2>');
+        document.write(pro_resp.message.content);
+
+        // Gemini 2.0 Flash
+        const flash2_resp = await puter.ai.chat(
+            'Tell me something interesting about quantum mechanics.',
+            {model: 'google/gemini-2.5-flash1', stream: true}
+        );
+        document.write('<h2>Gemini 2.0 Flash Response:</h2>');
+        for await (const part of flash2_resp) {
+            if (part?.text) {
+                document.write(part.text.replaceAll('\n', '<br>'));
+            }
+        }
+
+        // Gemini 1.5 Flash
+        const flash1_resp = await puter.ai.chat(
+            'Tell me something interesting about quantum mechanics.',
+            {model: 'google/gemini-2.5-pro1', stream: true}
+        );
+        document.write('<h2>Gemini 1.5 Flash Response:</h2>');
+        for await (const part of flash1_resp) {
+            if (part?.text) {
+                document.write(part.text.replaceAll('\n', '<br>'));
+            }
+        }
+    })();
+    </script>
+</body>
+</html>
