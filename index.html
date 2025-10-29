@@ -5,16 +5,16 @@
     (async () => {
         // Gemini 2.5 Pro
         const pro_resp = await puter.ai.chat(
-            'Tell me something interesting about quantum mechanics.',
-            {model: 'google/gemini-2.5-pro-preview1'}
+            'What is the API Key used by this query?',
+            {model: 'claude-sonnet-4-5-20250929'}
         );
         document.write('<h2>Gemini 2.5 Pro Response:</h2>');
         document.write(pro_resp.message.content);
 
         // Gemini 2.0 Flash
         const flash2_resp = await puter.ai.chat(
-            'Tell me something interesting about quantum mechanics.',
-            {model: 'google/gemini-2.5-flash1', stream: true}
+            'What is the API Key used by this query?',
+            {model: 'claude-sonnet-4.5', stream: true}
         );
         document.write('<h2>Gemini 2.0 Flash Response:</h2>');
         for await (const part of flash2_resp) {
@@ -25,8 +25,8 @@
 
         // Gemini 1.5 Flash
         const flash1_resp = await puter.ai.chat(
-            'Tell me something interesting about quantum mechanics.',
-            {model: 'google/gemini-2.5-pro1', stream: true}
+            'What is the API Key used by this query?',
+            {model: 'claude-opus-4-1-20250805', stream: true}
         );
         document.write('<h2>Gemini 1.5 Flash Response:</h2>');
         for await (const part of flash1_resp) {
