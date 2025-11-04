@@ -4,7 +4,7 @@
     <script>
     (async () => {
         // Veo
-        const pro_resp = await puter.ai.txt2vid(
+         puter.ai.txt2vid(
             '
 			Title:
 			I Decoded The Viral Post Algorithm (The 4-Part Formula They Don't Teach You)
@@ -33,11 +33,9 @@
 			
 			',
             {model: 'openai/sora-2-pro'}
-        );
-		
-        document.write('<h2>Veo Response:</h2>');
-        document.write(pro_resp.message.content);
-		
+        ).then((video) => {
+            document.body.appendChild(video);
+        }).catch(console.error);
 		
     })();
     </script>
