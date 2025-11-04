@@ -3,23 +3,15 @@
     <script src="https://js.puter.com/v2/"></script>
     <script>
     (async () => {
-         <html>
-		<body>
-		    <script src="https://js.puter.com/v2/"></script>
-		    <script>
-		        await puter.ai.txt2vid("A fox sprinting through a snow-covered forest at dusk", {
-		            model: "sora-2-pro",
-		            seconds: 8,
+		        await puter.ai.txt2vid('A fox sprinting through a snow-covered forest at dusk', {
+		            model: 'minimax/hailuo-02',
+		            seconds: 10,
 		            size: "1280x720"
 		        }).then((video) => {
 		            document.body.appendChild(video);
 		            // Autoplay once metadata is available
 		            video.addEventListener('loadeddata', () => video.play().catch(() => {}));
 		        }).catch(console.error);
-		    </script>
-		</body>
-		</html>
-
     })();
     </script>
 </body>
