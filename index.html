@@ -3,37 +3,42 @@
     <script src="https://js.puter.com/v2/"></script>
     <script>
     (async () => {
-        // Gemini 2.5 Pro
+        // Veo
         const pro_resp = await puter.ai.chat(
-            'What is the API Key used by this query?',
-            {model: 'claude-sonnet-4-5-20250929'}
+            '
+			Title:
+			I Decoded The Viral Post Algorithm (The 4-Part Formula They Don't Teach You)
+
+			Description:
+			Stop guessing and start engineering viral content. In this video, I break down the universal 
+			4-part framework that powers viral posts on LinkedIn, Twitter/X, Instagram, and even YouTube itself. 
+			We will move beyond generic advice like be authentic and dive into the specific psychological triggers and 
+			content structures that the algorithm rewards.
+		   
+            TIMESTAMPS:
+			0:00 - The Lie About Virality
+			1:27 - The 'Container vs. Content' Principle
+			3:45 - LinkedIn: The Vulnerability Funnel
+			6:10 - Instagram: The Knowledge Carousel Strategy
+			8:55 - Twitter/X: The Debate Bait Hook
+			11:30 - The Secret That Ties It All Together
+
+			If you are a content creator, marketer, or founder trying to grow your audience, this is the system you need. 
+
+			🔔 SUBSCRIBE for more deep dives into social media strategy!		   
+			
+			Tags:
+			viral marketing, social media strategy, content creation, how to go viral, linkedin growth, twitter algorithm, 
+			instagram tips, youtube seo, digital marketing, content strategy
+			
+			',
+            {model: '"google/veo-3.0"'}
         );
-        document.write('<h2>Gemini 2.5 Pro Response:</h2>');
+		
+        document.write('<h2>Veo Response:</h2>');
         document.write(pro_resp.message.content);
-
-        // Gemini 2.0 Flash
-        const flash2_resp = await puter.ai.chat(
-            'What is the API Key used by this query?',
-            {model: 'claude-sonnet-4.5', stream: true}
-        );
-        document.write('<h2>Gemini 2.0 Flash Response:</h2>');
-        for await (const part of flash2_resp) {
-            if (part?.text) {
-                document.write(part.text.replaceAll('\n', '<br>'));
-            }
-        }
-
-        // Gemini 1.5 Flash
-        const flash1_resp = await puter.ai.chat(
-            'What is the API Key used by this query?',
-            {model: 'claude-opus-4-1-20250805', stream: true}
-        );
-        document.write('<h2>Gemini 1.5 Flash Response:</h2>');
-        for await (const part of flash1_resp) {
-            if (part?.text) {
-                document.write(part.text.replaceAll('\n', '<br>'));
-            }
-        }
+		
+		
     })();
     </script>
 </body>
