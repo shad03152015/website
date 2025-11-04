@@ -4,9 +4,7 @@
     <script>
     (async () => {
 		        await puter.ai.txt2vid('A fox sprinting through a snow-covered forest at dusk', {
-		            model: 'sora-2-pro',
-		            seconds: 10,
-		            size: "1280x720"
+		            model: 'veo-3.0'
 		        }).then((video) => {
 		            document.body.appendChild(video);
 		            // Autoplay once metadata is available
