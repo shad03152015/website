@@ -85,6 +85,11 @@ Fronts public traffic; handles authentication, rate limiting, request shaping, s
 - **Presence/Voice State:** `user_id`, `server_id`, `status` (online/dnd/away/offline), `activity`, `voice_channel_id`, `muted`, `deafened`, `streaming`, `last_heartbeat`.
 - **Audit Log:** `id`, `server_id`, `actor_id`, `action`, `target`, `metadata`, `created_at`, `ip`.
 
+### MongoDB Collection Validators
+The backend prototype ships JSON Schema-based validators for the MongoDB collections in `src/data/schemas.js`, covering users, servers, channels, roles, memberships, invites, messages, threads, presence, and audit logs. Validators enforce required keys, enums (such as channel type or presence status), and shape expectations for permission overrides, reactions, and audit metadata.
+
+Permission enforcement uses server defaults that inherit down to channels and are refined by per-role channel overrides. Guests inherit only public channel permissions (view/read), members inherit the server defaults plus their roles’ allow/deny flags, and moderators/admins gain moderation, invite, and configuration abilities aligned to the permission surface.
+
 ## Scalability & Infrastructure
 - Horizontal scaling for stateless services behind load balancers with auto-scaling groups.
 - WebSocket gateways sharded by user/server; sticky sessions via tokens; presence fanout via pub/sub.
