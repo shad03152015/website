@@ -1,16 +1,935 @@
-<html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interact | Real-time Communication Platform</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --panel: #111827;
+      --accent: #38bdf8;
+      --accent-strong: #0891b2;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #1f2937;
+      --positive: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    button, input, textarea, select { font: inherit; }
+    a { color: var(--accent); }
+    .app { display: grid; grid-template-columns: 72px 240px 1fr 320px; grid-template-rows: auto 1fr; height: 100vh; }
+    header { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #0b1220; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 2; }
+    header .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.02em; }
+    header .status-chip { padding: 4px 10px; border-radius: 999px; background: #132036; color: var(--accent); font-size: 12px; display: inline-flex; gap: 8px; align-items: center; }
+    header nav { display: flex; gap: 10px; }
+    header button { background: #111827; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    header button.primary { background: var(--accent); color: #0b1220; border-color: var(--accent-strong); font-weight: 700; }
+    .server-rail { background: #0b1220; border-right: 1px solid var(--border); padding: 10px 8px; display: flex; flex-direction: column; gap: 8px; align-items: center; overflow-y: auto; }
+    .server-pill { width: 48px; height: 48px; border-radius: 16px; background: #111827; border: 2px solid transparent; display: grid; place-items: center; color: var(--text); cursor: pointer; transition: 0.2s; position: relative; }
+    .server-pill.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25); }
+    .server-pill .badge { position: absolute; top: -6px; right: -6px; background: var(--danger); color: white; font-size: 11px; width: 20px; height: 20px; border-radius: 10px; display: grid; place-items: center; }
+    .sidebar { background: var(--panel); border-right: 1px solid var(--border); padding: 12px; overflow-y: auto; }
+    .sidebar h2 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .channel { padding: 8px 10px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.15s ease; }
+    .channel:hover { background: #0f172a; }
+    .channel.active { background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.4); }
+    .channel .meta { display: flex; gap: 8px; align-items: center; }
+    .channel .badge { padding: 2px 8px; background: var(--accent-strong); color: #0b1220; border-radius: 999px; font-size: 12px; }
+    .channel .muted { color: var(--muted); font-size: 12px; }
+    .main { display: grid; grid-template-rows: auto auto 1fr auto; background: #0b1220; }
+    .channel-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .channel-header h1 { margin: 0; font-size: 20px; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .chip { background: #111827; color: var(--muted); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; }
+    .chip.accent { color: var(--accent); border-color: rgba(56, 189, 248, 0.6); }
+    .notif-settings { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .notif-settings label { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+    .notif-settings select, .notif-settings input[type="checkbox"] { accent-color: var(--accent); }
+    .timeline { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .message { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: #0f172a; display: grid; gap: 6px; position: relative; }
+    .message .author { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .message .author span { font-weight: 400; color: var(--muted); font-size: 12px; }
+    .message .content { line-height: 1.5; }
+    .message .meta { display: flex; gap: 10px; color: var(--muted); font-size: 12px; align-items: center; }
+    .message .reactions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .reaction { padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: #111827; font-size: 12px; cursor: pointer; }
+    .thread { margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--border); color: var(--muted); }
+    .thread h4 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .composer { padding: 14px 16px; border-top: 1px solid var(--border); display: grid; gap: 10px; background: #0b1220; }
+    .composer textarea { width: 100%; min-height: 80px; border: 1px solid var(--border); border-radius: 10px; background: #0f172a; color: var(--text); padding: 10px; resize: vertical; }
+    .composer .actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .button-row { display: flex; gap: 8px; }
+    .ghost-button { background: #111827; color: var(--text); border: 1px solid var(--border); padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+    .primary { background: var(--accent); color: #0b1220; border: 1px solid var(--accent-strong); font-weight: 700; }
+    .right-rail { background: #0b1220; border-left: 1px solid var(--border); display: grid; grid-template-rows: repeat(6, auto) 1fr; }
+    .panel { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .panel h3 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .presence-list, .permission-grid { display: grid; gap: 8px; }
+    .presence { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: #0f172a; }
+    .presence .dot { width: 10px; height: 10px; border-radius: 6px; background: var(--positive); box-shadow: 0 0 0 3px rgba(34,197,94,0.25); }
+    .presence.offline .dot { background: var(--muted); box-shadow: none; }
+    .presence .tag { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+    .permission-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+    .permission { padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: #0f172a; display: grid; gap: 6px; }
+    .permission .label { font-weight: 700; }
+    .permission .allow { color: var(--positive); }
+    .permission .deny { color: var(--danger); }
+    .insights { padding: 12px 14px; overflow-y: auto; }
+    .insights h3 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .insight { padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: #0f172a; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .tag { background: #111827; color: var(--muted); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; }
+    .admin-controls { display: grid; gap: 8px; }
+    .admin-controls label { display: grid; gap: 4px; color: var(--muted); font-size: 13px; }
+    .admin-controls input, .admin-controls select { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: var(--text); }
+    .admin-controls .switch-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: #0f172a; }
+    .switch-row strong { color: var(--text); }
+    .switch-row span { color: var(--muted); font-size: 12px; }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .label-sm { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .invites { display: grid; gap: 8px; }
+    .invite { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #0f172a; display: grid; gap: 6px; }
+    .search-box { padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: #0f172a; color: var(--text); width: 100%; }
+    .result { padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: #0f172a; display: grid; gap: 4px; }
+    .flow-grid { display: grid; gap: 8px; }
+    .flow-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #0f172a; display: grid; gap: 6px; }
+    .flow-card header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 5px; display: inline-block; background: var(--muted); }
+    .status-complete { background: var(--positive); box-shadow: 0 0 0 3px rgba(34,197,94,0.25); }
+    .toast-stack { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; max-width: 360px; z-index: 10; }
+    .toast { background: #111827; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .onboarding { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: grid; place-items: center; z-index: 20; }
+    .onboarding-card { background: #0b1220; padding: 20px; border-radius: 16px; border: 1px solid var(--border); width: min(560px, 90vw); display: grid; gap: 12px; }
+    .onboarding-card label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+    .onboarding-card input, .onboarding-card select { padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: var(--text); }
+    .typing { font-size: 13px; color: var(--muted); padding: 0 16px 8px; }
+    .voice-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .pill { padding: 6px 10px; border-radius: 999px; background: #111827; border: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 72px 200px 1fr; grid-template-rows: auto 1fr auto; }
+      .right-rail { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); grid-template-rows: auto; border-left: 0; border-top: 1px solid var(--border); }
+      .panel, .insights { border-right: 1px solid var(--border); }
+    }
+  </style>
+</head>
 <body>
-    <script src="https://js.puter.com/v2/"></script>
-    <script>
-    (async () => {
-		        await puter.ai.txt2vid('A fox sprinting through a snow-covered forest at dusk', {
-		            model: 'hailuo-02'
-		        }).then((video) => {
-		            document.body.appendChild(video);
-		            // Autoplay once metadata is available
-		            video.addEventListener('loadeddata', () => video.play().catch(() => {}));
-		        }).catch(console.error);
-    })();
-    </script>
+  <div class="app" aria-live="polite">
+    <header>
+      <div class="brand" aria-label="Interact brand">
+        <span aria-hidden="true">💬</span> Interact Platform Prototype
+      </div>
+      <div class="status-chip" role="status" aria-live="polite">
+        <span class="dot" style="width:10px;height:10px;border-radius:5px;background:var(--positive);"></span>
+        Connected to realtime mock
+      </div>
+      <nav aria-label="Quick actions">
+        <button aria-label="Open command palette" onclick="openQuickSwitcher()">⌘K Quick Switcher</button>
+        <button aria-label="Open settings and audit panels" onclick="openSettingsPanel()">Settings</button>
+        <button aria-label="Toggle accessibility settings" onclick="toggleReducedMotion()">Accessibility</button>
+        <button class="primary" aria-label="Open onboarding" onclick="openOnboarding()">New Member</button>
+      </nav>
+    </header>
+
+    <aside class="server-rail" aria-label="Servers" id="serverRail"></aside>
+
+    <aside class="sidebar" aria-label="Channels" id="channelSidebar">
+      <h2>Channels</h2>
+      <div id="channelList"></div>
+    </aside>
+
+    <main class="main" aria-label="Conversation" id="main">
+      <section class="channel-header">
+        <div>
+          <h1 id="channelTitle">#general</h1>
+          <div class="chips" id="channelChips"></div>
+        </div>
+        <div class="voice-bar" aria-label="Voice and meeting controls">
+          <button class="ghost-button" onclick="toggleVoice()">🎙️ Join Voice</button>
+          <span class="pill" id="voiceStatus">Muted · Screen share off</span>
+          <span class="pill" id="presenceChip">2 typing · 24 online</span>
+        </div>
+      </section>
+      <section class="notif-settings" aria-label="Notification settings">
+        <label><input type="checkbox" id="snoozeToggle" /> Snooze notifications</label>
+        <label>Channel alerts
+          <select id="notificationLevel">
+            <option>All activity</option>
+            <option>Mentions only</option>
+            <option>Nothing</option>
+          </select>
+        </label>
+        <label>Thread focus
+          <select id="threadNotification">
+            <option>Auto-follow threads</option>
+            <option>Only threads I reply to</option>
+          </select>
+        </label>
+      </section>
+      <p class="typing" id="typingIndicator" aria-live="polite">You and Dev Rel are typing…</p>
+      <section class="timeline" id="timeline" aria-label="Message timeline"></section>
+      <section class="composer" aria-label="Message composer">
+        <div class="button-row" aria-label="Composer shortcuts">
+          <button class="ghost-button" onclick="insertAtCursor('**bold**')" aria-label="Insert bold markdown">B</button>
+          <button class="ghost-button" onclick="insertAtCursor('_italics_')" aria-label="Insert italic markdown">I</button>
+          <button class="ghost-button" onclick="insertAtCursor(':smile:')" aria-label="Insert emoji">😊</button>
+          <button class="ghost-button" onclick="attachFile()" aria-label="Attach media">📎 Media</button>
+        </div>
+        <label class="sr-only" for="messageBox">Message body</label>
+        <textarea id="messageBox" placeholder="Message #general with markdown, mentions, and emoji" aria-multiline="true" aria-label="Message input" oninput="onTyping()"></textarea>
+        <div class="actions">
+          <div class="button-row">
+            <label class="ghost-button" aria-label="Set thread follow"><input type="checkbox" checked /> Follow thread</label>
+            <label class="ghost-button" aria-label="Request read receipt"><input type="checkbox" checked /> Read receipt</label>
+          </div>
+          <div class="button-row">
+            <button class="ghost-button" onclick="toggleDnd()" aria-pressed="false" id="dndBtn">🔕 DND</button>
+            <button class="primary" onclick="sendMessage()" aria-label="Send message">Send</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="right-rail" aria-label="Insights">
+      <section class="panel" aria-label="Members present">
+        <h3>Presence</h3>
+        <div class="presence-list" id="presenceList"></div>
+      </section>
+      <section class="panel" aria-label="Permissions">
+        <h3>Permissions</h3>
+        <div class="permission-grid" id="permissionGrid"></div>
+        <div class="tag" id="inheritanceNote">Server defaults apply unless overridden per-channel.</div>
+      </section>
+      <section class="panel" aria-label="Server defaults">
+        <h3>Server Defaults</h3>
+        <div class="admin-controls" id="serverDefaults"></div>
+      </section>
+      <section class="panel" aria-label="Invite management">
+        <h3>Invites</h3>
+        <div class="admin-controls">
+          <div class="input-row">
+            <label>Channel
+              <select id="inviteChannel"></select>
+            </label>
+            <label>Expires
+              <select id="inviteExpiry">
+                <option value="7d">7 days</option>
+                <option value="1d">1 day</option>
+                <option value="1h">1 hour</option>
+              </select>
+            </label>
+          </div>
+          <div class="input-row">
+            <label>Max uses
+              <input id="inviteUses" type="number" min="1" value="5" />
+            </label>
+            <label class="switch-row">
+              <div>
+                <strong>Temporary</strong>
+                <div class="label-sm">Remove when member leaves</div>
+              </div>
+              <input id="inviteTemp" type="checkbox" />
+            </label>
+          </div>
+          <button class="primary" onclick="createInvite()">Generate invite</button>
+        </div>
+        <div class="invites" id="inviteList"></div>
+      </section>
+      <section class="panel" aria-label="Discovery">
+        <h3>Discovery & Search</h3>
+        <input id="discoveryInput" class="search-box" placeholder="Search servers, channels, or people" oninput="renderDiscovery()" />
+        <div class="invites" id="discoveryResults"></div>
+      </section>
+      <section class="panel" aria-label="UX Flow Coach">
+        <h3>UX Flow Coach</h3>
+        <div class="flow-grid" id="flowGrid"></div>
+      </section>
+      <section class="insights" aria-label="Activity">
+        <h3>Activity & Moderation</h3>
+        <div id="insightList"></div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="toast-stack" aria-live="polite" id="toastStack"></div>
+  <div class="onboarding" id="onboarding" hidden>
+    <div class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+      <div>
+        <p class="tag">First-time setup</p>
+        <h2 id="onboardingTitle">Create or join your first server</h2>
+        <p>Interact ships with onboarding flows for email/password or OAuth. Device checks and security sessions are pre-enabled.</p>
+      </div>
+      <label>Display name
+        <input id="displayName" placeholder="Ada Lovelace" />
+      </label>
+      <label>Email
+        <input id="email" type="email" placeholder="you@example.com" />
+      </label>
+      <label>Join a server
+        <select id="serverSelect"></select>
+      </label>
+      <div class="button-row" style="justify-content: flex-end;">
+        <button class="ghost-button" onclick="closeOnboarding()">Skip</button>
+        <button class="primary" onclick="completeOnboarding()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const defaultMessages = {
+      general: [
+        {
+          author: "Dev Rel",
+          role: "Admin",
+          content: "Welcome to Interact! Use **markdown**, :sparkles:, and mentions like @Avery. Thread replies keep channels tidy.",
+          reactions: { "👍": 6, "✨": 4 },
+          time: "09:12",
+          thread: ["Can we pin the onboarding flow?", "Add keyboard shortcuts doc."],
+          audit: "Edited 2m ago"
+        },
+        {
+          author: "Harper",
+          role: "Engineer",
+          content: "Presence signals are fanned out over WebSockets. TURN/STUN ready for voice/video.",
+          reactions: { "✅": 3 },
+          time: "09:15",
+          thread: ["Add SFU metrics dashboard", "Simulate packet loss in QA"],
+          audit: "Encrypted in transit"
+        }
+      ],
+      "design-review": [
+        {
+          author: "Nia",
+          role: "Designer",
+          content: "Uploaded the new accessibility high-contrast theme. Drag-and-drop uploads hit virus scan + CDN publish pipeline.",
+          reactions: { "❤️": 5, "🧪": 1 },
+          time: "08:45",
+          thread: ["Need reduced-motion toggle on hero animation"],
+          audit: "Scan passed"
+        }
+      ],
+      "voice-cafe": [
+        { author: "Sam", role: "Moderator", content: "Voice channel for hallway chatter. Push to talk supported.", reactions: { "🎙️": 2 }, time: "08:10", thread: [], audit: "" }
+      ],
+      "mod-only": [
+        { author: "Avery", role: "Moderator", content: "Remember to rotate invite codes weekly and audit webhook secrets.", reactions: { "🔒": 3 }, time: "07:32", thread: ["Add CAPTCHA for high-risk invites"], audit: "Logged" }
+      ],
+      welcome: [ { author: "Ivy", role: "Member", content: "Welcome new players! Consent to permissions before joining rooms.", reactions: { "👋": 8 }, time: "10:02", thread: [], audit: "" } ],
+      matchmaking: [ { author: "Sam", role: "Moderator", content: "Pairing squads. React with ✅ to lock in.", reactions: { "✅": 7 }, time: "10:05", thread: ["Need voice checks?"], audit: "" } ],
+      "party-voice": [ { author: "Theo", role: "Member", content: "Voice lobby synced. Screen share + hand raise available.", reactions: { "🎉": 2 }, time: "09:55", thread: [], audit: "" } ],
+      clips: [ { author: "Ivy", role: "Member", content: "Clips auto-transcoded and thumbnailed before publish.", reactions: { "📽️": 3 }, time: "09:40", thread: ["Add spoiler tags"], audit: "" } ]
+    };
+
+    const state = {
+      currentUser: { name: "Avery", status: "online", role: "Moderator" },
+      flows: {
+        onboarding: false,
+        discovery: false,
+        navigation: false,
+        messaging: false,
+        notifications: false,
+        media: false,
+        settings: false,
+        accessibility: false,
+      },
+      servers: [
+        {
+          id: "design-guild",
+          name: "Design Guild",
+          badge: 2,
+          serverDefaults: { view: true, post: true, upload: true, threads: true, reactions: true, voice: true, moderate: false },
+          channels: [
+            { id: "general", name: "general", type: "text", unread: 3, rateLimit: "2s slow mode", mentions: 1 },
+            { id: "design-review", name: "design-review", type: "text", unread: 0, locked: false },
+            { id: "voice-cafe", name: "voice-cafe", type: "voice", unread: 0, locked: false },
+            { id: "mod-only", name: "mod-only", type: "text", unread: 1, locked: true }
+          ],
+          permissions: {
+            general: { view: true, post: true, upload: true, reactions: true, threads: true },
+            "design-review": { view: true, post: true, upload: false, reactions: true, threads: true },
+            "voice-cafe": { view: true, post: false, upload: false, reactions: true, voice: true },
+            "mod-only": { view: true, post: true, upload: true, reactions: true, threads: true, moderate: true }
+          },
+          invites: [
+            { code: "join-ux", channelId: "general", expires: "7d", maxUses: 10, uses: 2, temporary: false },
+            { code: "design-day", channelId: "design-review", expires: "1d", maxUses: 3, uses: 1, temporary: true }
+          ],
+          members: [
+            { name: "Avery", status: "online", role: "Moderator", activity: "Reviewing onboarding" },
+            { name: "Dev Rel", status: "typing", role: "Admin", activity: "Writing docstring" },
+            { name: "Nia", status: "dnd", role: "Designer", activity: "In usability lab" },
+            { name: "Harper", status: "online", role: "Engineer", activity: "Streaming UI tests" }
+          ]
+        },
+        {
+          id: "gaming-lounge",
+          name: "Gaming Lounge",
+          badge: 0,
+          serverDefaults: { view: true, post: true, upload: false, threads: true, reactions: true, voice: true, moderate: false },
+          channels: [
+            { id: "welcome", name: "welcome", type: "text", unread: 0 },
+            { id: "matchmaking", name: "matchmaking", type: "text", unread: 6, mentions: 2 },
+            { id: "party-voice", name: "party-voice", type: "voice", unread: 0 },
+            { id: "clips", name: "clips", type: "text", unread: 1 }
+          ],
+          permissions: {
+            welcome: { view: true, post: true, upload: false, reactions: true },
+            matchmaking: { view: true, post: true, upload: true, reactions: true, threads: true },
+            "party-voice": { view: true, voice: true, upload: false },
+            clips: { view: true, post: true, upload: true, reactions: true }
+          },
+          invites: [
+            { code: "gl-welcome", channelId: "welcome", expires: "7d", maxUses: 25, uses: 12, temporary: false }
+          ],
+          members: [
+            { name: "Ivy", status: "online", role: "Member", activity: "Queueing" },
+            { name: "Theo", status: "offline", role: "Member", activity: "" },
+            { name: "Sam", status: "online", role: "Moderator", activity: "Running tournament" }
+          ]
+        }
+      ],
+      messages: loadCachedMessages(defaultMessages),
+      activity: [
+        { title: "Audit log", detail: "Avery deleted a message in #general", tag: "Moderation", tone: "warning" },
+        { title: "Security", detail: "New device sign-in protected by WebAuthn", tag: "Security", tone: "positive" },
+        { title: "Media pipeline", detail: "Video transcoding completed for onboarding clip", tag: "Media", tone: "info" }
+      ]
+    };
+
+    let selectedServer = state.servers[0];
+    let selectedChannel = selectedServer.channels[0];
+    let reducedMotion = false;
+    let typingTimer;
+
+    function loadCachedMessages(fallback) {
+      if (typeof localStorage === "undefined") return fallback;
+      try {
+        const cached = JSON.parse(localStorage.getItem("interact.messages") || "{}");
+        const clone = JSON.parse(JSON.stringify(fallback));
+        Object.entries(cached).forEach(([key, value]) => {
+          clone[key] = value;
+        });
+        return clone;
+      } catch (err) {
+        console.warn("Failed to read cached messages", err);
+        return fallback;
+      }
+    }
+
+    function persistMessages() {
+      if (typeof localStorage === "undefined") return;
+      try {
+        localStorage.setItem("interact.messages", JSON.stringify(state.messages));
+      } catch (err) {
+        console.warn("Failed to persist cached messages", err);
+      }
+    }
+
+    function el(tag, attrs = {}, children = []) {
+      const node = document.createElement(tag);
+      Object.entries(attrs).forEach(([key, value]) => {
+        if (key === "class") node.className = value;
+        else if (key === "html") node.innerHTML = value;
+        else node.setAttribute(key, value);
+      });
+      children.forEach((child) => node.append(child));
+      return node;
+    }
+
+    const flowMeta = {
+      onboarding: { label: "Onboarding", detail: "Account creation, OAuth, consent, and tutorial." },
+      discovery: { label: "Discovery & joining", detail: "Directory search, invite redemption, preview and permission consent." },
+      navigation: { label: "Navigation", detail: "Server/channel rail, unread badges, keyboard shortcuts, quick switcher." },
+      messaging: { label: "Messaging", detail: "Markdown, emoji, mentions, threading, reactions, presence/typing." },
+      notifications: { label: "Notifications", detail: "Per-channel/thread controls, snooze/DND, push prompts, inbox." },
+      media: { label: "Media & voice/video", detail: "Drag-drop uploads, device checks, screen share, hand raise controls." },
+      settings: { label: "Settings panels", detail: "Profile, privacy, notifications, keybinds, audit/security sessions." },
+      accessibility: { label: "Accessibility", detail: "Keyboard navigation, focus management, ARIA, high-contrast/reduced motion." },
+    };
+
+    function markFlow(key, silent = false) {
+      if (!state.flows[key]) {
+        state.flows[key] = true;
+        renderFlows();
+        if (!silent) pushToast(`${flowMeta[key]?.label || key} flow captured`);
+      }
+    }
+
+    function renderFlows() {
+      const grid = document.getElementById("flowGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+      Object.keys(flowMeta).forEach((key) => {
+        const meta = flowMeta[key];
+        const complete = !!state.flows[key];
+        const card = el("div", { class: "flow-card" });
+        const header = el("header");
+        const badge = el("span", { class: `status-dot ${complete ? "status-complete" : ""}`, "aria-hidden": "true" });
+        const title = el("div", {}, [document.createTextNode(meta.label)]);
+        header.append(el("div", { style: "display:flex; align-items:center; gap:6px;" }, [badge, title]));
+        header.append(el("span", { class: "tag" }, [document.createTextNode(complete ? "Complete" : "In progress")]));
+        card.append(header);
+        card.append(el("div", { style: "color: var(--muted);" }, [document.createTextNode(meta.detail)]));
+        const actionLabel = complete ? "Revisit" : "Complete flow";
+        const action = el("button", { class: "ghost-button" }, [document.createTextNode(actionLabel)]);
+        action.onclick = () => {
+          switch (key) {
+            case "onboarding":
+              openOnboarding();
+              break;
+            case "discovery":
+              document.getElementById("discoveryInput").focus();
+              break;
+            case "navigation":
+              openQuickSwitcher();
+              break;
+            case "messaging":
+              document.getElementById("messageBox").focus();
+              break;
+            case "notifications":
+              document.getElementById("notificationLevel").focus();
+              break;
+            case "media":
+              attachFile();
+              break;
+            case "settings":
+              openSettingsPanel();
+              break;
+            case "accessibility":
+              toggleReducedMotion();
+              break;
+            default:
+              break;
+          }
+          markFlow(key, complete);
+        };
+        card.append(action);
+        grid.append(card);
+      });
+    }
+
+    function renderServers() {
+      const rail = document.getElementById("serverRail");
+      rail.innerHTML = "";
+      state.servers.forEach((server) => {
+        const btn = el("button", {
+          class: `server-pill ${selectedServer.id === server.id ? "active" : ""}`,
+          "aria-label": `Switch to ${server.name}`,
+        }, [document.createTextNode(server.name.split(" ")[0][0])]);
+        if (server.badge) btn.append(el("span", { class: "badge" }, [document.createTextNode(server.badge)]));
+          btn.onclick = () => {
+            selectedServer = server;
+            selectedChannel = server.channels[0];
+            render();
+            pushToast(`Switched to ${server.name}`);
+            markFlow("navigation", true);
+          };
+        rail.append(btn);
+      });
+      const add = el("button", { class: "server-pill", "aria-label": "Create server" }, [document.createTextNode("+")]);
+      add.onclick = createServer;
+      rail.append(add);
+    }
+
+    function renderChannels() {
+      const list = document.getElementById("channelList");
+      list.innerHTML = "";
+      selectedServer.channels.forEach((ch) => {
+        const wrapper = el("div", { class: `channel ${selectedChannel.id === ch.id ? "active" : ""}`, tabindex: 0 });
+        wrapper.onclick = () => {
+          selectedChannel = ch;
+          render();
+        };
+        wrapper.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") wrapper.click(); };
+        const icon = ch.type === "voice" ? "🔊" : "#";
+        const meta = el("div", { class: "meta" }, [
+          el("span", {}, [document.createTextNode(icon)]),
+          el("span", {}, [document.createTextNode(ch.name)]),
+          ch.locked ? el("span", { class: "muted" }, [document.createTextNode("locked")]) : null,
+        ].filter(Boolean));
+        const right = el("div", { class: "meta" });
+        if (ch.mentions) right.append(el("span", { class: "badge" }, [document.createTextNode(`@${ch.mentions}`)]));
+        if (ch.unread) right.append(el("span", { class: "badge" }, [document.createTextNode(ch.unread)]));
+        wrapper.append(meta, right);
+        list.append(wrapper);
+      });
+    }
+
+    function renderChips() {
+      const chips = document.getElementById("channelChips");
+      chips.innerHTML = "";
+      const overrides = selectedServer.permissions[selectedChannel.id] || {};
+      const defaults = selectedServer.serverDefaults || {};
+      const permission = { ...defaults, ...overrides };
+      const flags = [
+        permission.voice ? "Voice/video" : null,
+        permission.upload ? "Uploads" : null,
+        permission.threads ? "Threads" : null,
+        permission.moderate ? "Moderation" : null,
+        permission.post === false ? "Read-only" : null,
+        selectedChannel.rateLimit,
+      ].filter(Boolean);
+      flags.forEach((flag) => chips.append(el("span", { class: "chip accent" }, [document.createTextNode(flag)])));
+      if (!flags.length) chips.append(el("span", { class: "chip" }, [document.createTextNode("Standard access")]))
+    }
+
+    function renderMessages() {
+      const timeline = document.getElementById("timeline");
+      timeline.innerHTML = "";
+      const messages = state.messages[selectedChannel.id] || [];
+      messages.forEach((msg) => {
+        const card = el("article", { class: "message", "aria-label": `${msg.author} at ${msg.time}` });
+        card.append(el("div", { class: "author" }, [document.createTextNode(msg.author), el("span", {}, [document.createTextNode(`${msg.role} • ${msg.time}`)])]));
+        const html = msg.content
+          .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+          .replace(/_(.+?)_/g, "<em>$1</em>")
+          .replace(/:(\w+):/g, "<span aria-hidden='true'>😊</span><span class='sr-only'>$1</span>");
+        card.append(el("div", { class: "content", html }));
+        const meta = el("div", { class: "meta" }, [
+          el("span", {}, [document.createTextNode(msg.audit || "Secured")]),
+          el("span", {}, [document.createTextNode("Read receipts on")]),
+          el("span", {}, [document.createTextNode("Report")])
+        ]);
+        card.append(meta);
+        const reactionWrap = el("div", { class: "reactions" });
+        Object.entries(msg.reactions || {}).forEach(([emoji, count]) => {
+          const react = el("button", { class: "reaction", "aria-label": `Add reaction ${emoji}` }, [document.createTextNode(`${emoji} ${count}`)]);
+          react.onclick = () => {
+            msg.reactions[emoji] = count + 1;
+            renderMessages();
+          };
+          reactionWrap.append(react);
+        });
+        reactionWrap.append(el("button", { class: "reaction" }, [document.createTextNode("➕ Add")]))
+        card.append(reactionWrap);
+        if (msg.thread?.length) {
+          const thread = el("div", { class: "thread" });
+          thread.append(el("h4", {}, [document.createTextNode("Thread")]))
+          msg.thread.forEach((reply) => thread.append(el("div", {}, [document.createTextNode(reply)])));
+          card.append(thread);
+        }
+        timeline.append(card);
+      });
+      timeline.scrollTop = timeline.scrollHeight;
+    }
+
+    function renderPresence() {
+      const list = document.getElementById("presenceList");
+      list.innerHTML = "";
+      selectedServer.members.forEach((member) => {
+        const row = el("div", { class: `presence ${member.status === "offline" ? "offline" : ""}` });
+        const status = member.status === "typing" ? "Typing" : member.status === "dnd" ? "Do not disturb" : member.status;
+        row.append(el("span", { class: "dot", "aria-hidden": "true" }));
+        row.append(el("div", {}, [document.createTextNode(member.name)]));
+        row.append(el("span", { class: "tag" }, [document.createTextNode(`${member.role} • ${status}`)]));
+        if (member.activity) row.append(el("span", { class: "tag" }, [document.createTextNode(member.activity)]));
+        list.append(row);
+      });
+      document.getElementById("presenceChip").textContent = `${Math.floor(Math.random() * 3) + 1} typing · ${selectedServer.members.length} online`;
+    }
+
+    function renderPermissions() {
+      const grid = document.getElementById("permissionGrid");
+      grid.innerHTML = "";
+      const overrides = selectedServer.permissions[selectedChannel.id] || {};
+      const defaults = selectedServer.serverDefaults || {};
+      const surface = [
+        { key: "view", label: "View channel" },
+        { key: "post", label: "Post messages" },
+        { key: "upload", label: "Upload media" },
+        { key: "threads", label: "Threads" },
+        { key: "reactions", label: "Reactions" },
+        { key: "voice", label: "Voice/Video" },
+        { key: "moderate", label: "Moderation" },
+      ];
+      surface.forEach(({ key, label }) => {
+        const allowed = overrides[key] ?? defaults[key] ?? false;
+        const card = el("div", { class: "permission" });
+        card.append(el("div", { class: "label" }, [document.createTextNode(label)]));
+        card.append(el("div", { class: allowed ? "allow" : "deny" }, [document.createTextNode(allowed ? "Allowed" : "Denied")]))
+        const toggle = el("button", { class: "ghost-button" }, [document.createTextNode(overrides[key] === undefined ? "Inherit" : "Override")]);
+        toggle.onclick = () => {
+          if (overrides[key] === undefined) overrides[key] = !allowed;
+          else delete overrides[key];
+          selectedServer.permissions[selectedChannel.id] = { ...overrides };
+          renderPermissions();
+          pushToast(`${label} now ${overrides[key] === undefined ? "inheriting" : overrides[key] ? "allowed" : "denied"}`);
+        };
+        card.append(toggle);
+        grid.append(card);
+      });
+      const note = document.getElementById("inheritanceNote");
+      note.textContent = `Server defaults: ${Object.entries(defaults).map(([k,v]) => `${k}:${v ? "on" : "off"}`).join(" · ")}`;
+    }
+
+    function renderServerDefaults() {
+      const wrap = document.getElementById("serverDefaults");
+      wrap.innerHTML = "";
+      const defaults = selectedServer.serverDefaults || {};
+      [
+        { key: "post", label: "Posting", hint: "Allow members to send messages" },
+        { key: "upload", label: "Media uploads", hint: "Enable upload + virus scan" },
+        { key: "voice", label: "Voice/video", hint: "Join streams with device checks" },
+        { key: "threads", label: "Threads", hint: "Start and follow threads" },
+        { key: "moderate", label: "Moderation", hint: "Timeout/ban and manage reports" }
+      ].forEach(({ key, label, hint }) => {
+        const row = el("label", { class: "switch-row" });
+        const info = el("div", {});
+        info.append(el("strong", {}, [document.createTextNode(label)]));
+        info.append(el("span", {}, [document.createTextNode(hint)]));
+        const input = el("input", { type: "checkbox" });
+        input.checked = !!defaults[key];
+        input.onchange = () => {
+          defaults[key] = input.checked;
+          renderPermissions();
+          renderChips();
+          pushToast(`Server default ${label} ${input.checked ? "enabled" : "disabled"}`);
+        };
+        row.append(info, input);
+        wrap.append(row);
+      });
+    }
+
+    function renderInvites() {
+      const select = document.getElementById("inviteChannel");
+      select.innerHTML = "";
+      selectedServer.channels.forEach((ch) => select.append(new Option(`#${ch.name}`, ch.id)));
+      const list = document.getElementById("inviteList");
+      list.innerHTML = "";
+      (selectedServer.invites || []).forEach((invite) => {
+        const uses = `${invite.uses}/${invite.maxUses} uses`;
+        const row = el("div", { class: "invite" });
+        row.append(el("div", { class: "label" }, [document.createTextNode(`/${invite.code}`)]));
+        row.append(el("div", { class: "tag" }, [document.createTextNode(`#${invite.channelId} • ${invite.expires}`)]));
+        row.append(el("div", {}, [document.createTextNode(`${uses} • ${invite.temporary ? "Temporary" : "Permanent"}`)]));
+        list.append(row);
+      });
+    }
+
+    function createInvite() {
+      const channelId = document.getElementById("inviteChannel").value;
+      const expires = document.getElementById("inviteExpiry").value;
+      const maxUses = Number(document.getElementById("inviteUses").value) || 1;
+      const temporary = document.getElementById("inviteTemp").checked;
+      const code = Math.random().toString(36).slice(2, 8);
+      selectedServer.invites = selectedServer.invites || [];
+      selectedServer.invites.unshift({ code, channelId, expires, maxUses, uses: 0, temporary });
+      renderInvites();
+      pushToast(`Invite /${code} generated for #${channelId}`);
+    }
+
+    function renderDiscovery() {
+      const input = document.getElementById("discoveryInput");
+      const query = input.value.toLowerCase();
+      const results = document.getElementById("discoveryResults");
+      results.innerHTML = "";
+      const matches = state.servers
+        .flatMap((server) => server.channels.map((ch) => ({ server, channel: ch })))
+        .filter(({ server, channel }) => !query || server.name.toLowerCase().includes(query) || channel.name.toLowerCase().includes(query));
+      if (query.length > 2 && matches.length) markFlow("discovery", true);
+      if (!matches.length) {
+        results.append(el("div", { class: "tag" }, [document.createTextNode("No results yet")]))
+        return;
+      }
+      matches.slice(0, 6).forEach(({ server, channel }) => {
+        const card = el("div", { class: "result" });
+        card.append(el("div", { class: "label" }, [document.createTextNode(server.name)]));
+        card.append(el("div", {}, [document.createTextNode(`#${channel.name} • ${channel.type}`)]));
+        card.append(el("div", { class: "tag" }, [document.createTextNode("Preview + consent")]))
+        results.append(card);
+      });
+    }
+
+    function createServer() {
+      const name = prompt("Server name", "New Server");
+      if (!name) return;
+      const id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `server-${Date.now()}`;
+      const server = {
+        id,
+        name,
+        badge: 1,
+        serverDefaults: { view: true, post: true, upload: true, threads: true, reactions: true, voice: true, moderate: false },
+        channels: [
+          { id: "general", name: "general", type: "text", unread: 0 },
+          { id: "voice", name: "voice", type: "voice", unread: 0 },
+        ],
+        permissions: { general: { view: true, post: true, upload: true, reactions: true, threads: true }, voice: { view: true, voice: true } },
+        invites: [],
+        members: [state.currentUser]
+      };
+      state.servers.push(server);
+      selectedServer = server;
+      selectedChannel = server.channels[0];
+      render();
+      pushToast(`${name} created with default protections`);
+    }
+
+    function renderActivity() {
+      const list = document.getElementById("insightList");
+      list.innerHTML = "";
+      state.activity.forEach((item) => {
+        const toneColor = item.tone === "warning" ? varWarning() : item.tone === "positive" ? varPositive() : varAccent();
+        const row = el("div", { class: "insight" });
+        row.append(el("div", {}, [
+          el("div", { style: `color:${toneColor}; font-weight:700;` }, [document.createTextNode(item.title)]),
+          el("div", { style: "color: var(--muted);" }, [document.createTextNode(item.detail)])
+        ]));
+        row.append(el("span", { class: "tag" }, [document.createTextNode(item.tag)]));
+        list.append(row);
+      });
+    }
+
+    function sendMessage() {
+      const box = document.getElementById("messageBox");
+      const content = box.value.trim();
+      if (!content) return;
+      const channelId = selectedChannel.id;
+      state.messages[channelId] = state.messages[channelId] || [];
+      state.messages[channelId].push({
+        author: state.currentUser.name,
+        role: state.currentUser.role,
+        content,
+        reactions: { "✨": 1 },
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        thread: [],
+        audit: "Just now"
+      });
+      persistMessages();
+      box.value = "";
+      renderMessages();
+      pushToast(`Message sent to #${channelId}`);
+      markFlow("messaging");
+      setTyping(false);
+    }
+
+    function insertAtCursor(text) {
+      const box = document.getElementById("messageBox");
+      const start = box.selectionStart || 0;
+      const end = box.selectionEnd || 0;
+      box.value = box.value.slice(0, start) + text + box.value.slice(end);
+      box.focus();
+      box.selectionStart = start + text.length;
+      box.selectionEnd = start + text.length;
+      onTyping();
+    }
+
+    function attachFile() {
+      pushToast("Media upload simulated: scanned and CDN ready.");
+      markFlow("media", true);
+    }
+
+    function pushToast(message) {
+      const stack = document.getElementById("toastStack");
+      const toast = el("div", { class: "toast" }, [document.createTextNode(message)]);
+      stack.append(toast);
+      setTimeout(() => toast.remove(), 3200);
+    }
+
+    function toggleVoice() {
+      const status = document.getElementById("voiceStatus");
+      const active = status.textContent.includes("Live");
+      status.textContent = active ? "Muted · Screen share off" : "Live in voice · Screenshare ready";
+      pushToast(active ? "Left voice" : "Joined voice with device checks");
+      markFlow("media", true);
+    }
+
+    function toggleDnd() {
+      const btn = document.getElementById("dndBtn");
+      const isOn = btn.getAttribute("aria-pressed") === "true";
+      btn.setAttribute("aria-pressed", String(!isOn));
+      btn.textContent = isOn ? "🔕 DND" : "🔔 Alerts";
+      pushToast(isOn ? "Do-not-disturb disabled" : "Do-not-disturb enabled");
+      markFlow("notifications", true);
+    }
+
+    function openSettingsPanel() {
+      pushToast("Settings, privacy, keybinds, and audit sessions opened.");
+      markFlow("settings");
+    }
+
+    function onTyping() {
+      setTyping(true);
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => setTyping(false), 1200);
+    }
+
+    function setTyping(isTyping) {
+      const indicator = document.getElementById("typingIndicator");
+      indicator.textContent = isTyping ? "You are typing…" : "Dev Rel is typing…";
+    }
+
+    function toggleReducedMotion() {
+      reducedMotion = !reducedMotion;
+      document.body.style.scrollBehavior = reducedMotion ? "auto" : "smooth";
+      pushToast(`Reduced motion ${reducedMotion ? "enabled" : "disabled"}`);
+      markFlow("accessibility", true);
+    }
+
+    function openQuickSwitcher() {
+      pushToast("Quick switcher: press Tab to jump between servers and channels.");
+      markFlow("navigation", true);
+    }
+
+    function openOnboarding() {
+      document.getElementById("onboarding").hidden = false;
+      const select = document.getElementById("serverSelect");
+      select.innerHTML = "";
+      state.servers.forEach((server) => {
+        select.append(new Option(server.name, server.id));
+      });
+    }
+
+    function closeOnboarding() {
+      document.getElementById("onboarding").hidden = true;
+    }
+
+    function completeOnboarding() {
+      const name = document.getElementById("displayName").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const serverId = document.getElementById("serverSelect").value;
+      if (name) state.currentUser.name = name;
+      pushToast(`Welcome ${name || "New member"}! Consent captured for ${serverId}.`);
+      markFlow("onboarding");
+      closeOnboarding();
+      const target = state.servers.find((s) => s.id === serverId);
+      if (target) {
+        selectedServer = target;
+        selectedChannel = target.channels[0];
+        render();
+      }
+    }
+
+      function render() {
+        document.getElementById("channelTitle").textContent = `#${selectedChannel.name}`;
+        renderServers();
+        renderChannels();
+        renderChips();
+        renderMessages();
+        renderPresence();
+        renderPermissions();
+        renderServerDefaults();
+        renderInvites();
+        renderDiscovery();
+        renderFlows();
+        renderActivity();
+      }
+
+    function varAccent() { return getComputedStyle(document.documentElement).getPropertyValue("--accent"); }
+    function varPositive() { return getComputedStyle(document.documentElement).getPropertyValue("--positive"); }
+    function varWarning() { return getComputedStyle(document.documentElement).getPropertyValue("--warning"); }
+
+    document.getElementById("notificationLevel").onchange = () => { markFlow("notifications"); pushToast("Channel notifications updated"); };
+    document.getElementById("threadNotification").onchange = () => { markFlow("notifications"); pushToast("Thread preferences saved"); };
+    document.getElementById("snoozeToggle").onchange = () => { markFlow("notifications"); pushToast("Snooze preference recorded"); };
+
+    render();
+  </script>
 </body>
 </html>
