@@ -12,7 +12,6 @@ Interact is a real-time communication platform focused on accessibility-first co
 - **Media & Voice/Video:** Drag-and-drop uploads with progress, inline playback, join voice/video with device checks, screen share and hand-raise controls.
 - **Settings Panels:** Profile, privacy, notifications, keybinds, accessibility, audit/security sessions, data export, moderation panels for admins.
 - **Accessibility:** Keyboard navigation for all actions, focus management, ARIA roles/labels, high-contrast and reduced-motion modes.
-- **UX Flow Coach:** Interactive checklist surfacing each user journey (onboarding, discovery, navigation, messaging, notifications, media/voice, settings, accessibility) with call-to-action buttons that open the relevant UI and record completion.
 
 ## User Roles and Permissions
 - **Guest**
@@ -48,8 +47,8 @@ Interact is a real-time communication platform focused on accessibility-first co
 
 ## System Architecture
 ### Frontend
-- Single-page app (React or Vue) consuming GraphQL/REST APIs via an API gateway. The prototype UI functions as a single-page shell and illustrates the same flows.
-- Client state store for sessions, permissions, and message cache; offline caching for recent messages and optimistic UI updates (the prototype persists channel history to localStorage).
+- Single-page app (React or Vue) consuming GraphQL/REST APIs via an API gateway.
+- Client state store for sessions, permissions, and message cache; offline caching for recent messages and optimistic UI updates.
 - Accessibility-first components with ARIA labeling, focus management, and keyboard-first navigation.
 
 ### Real-time Transport
@@ -66,10 +65,10 @@ Interact is a real-time communication platform focused on accessibility-first co
 - **Moderation service:** Reports, enforcement, automation rules, appeal flows.
 
 ### API Gateway
-Fronts public traffic; handles authentication, rate limiting, request shaping, schema validation, and routing to backend services. A co-located GraphQL endpoint (`/graphql`) provides a typed aggregation surface for servers/channels/messages alongside the existing REST routes.
+Fronts public traffic; handles authentication, rate limiting, request shaping, schema validation, and routing to backend services.
 
 ## Data Storage
-- **MongoDB:** Primary store for users, servers, channels, roles, memberships, invites, presence, audit logs, and message thread metadata with collection validators to enforce the conceptual schemas.
+- **Relational DB (PostgreSQL/MySQL):** Auth, user profiles, servers, channels, roles, invites, audit logs.
 - **NoSQL/append-only streams (Cassandra/DynamoDB/Kafka):** Messages/events with time-partitioning for high write throughput.
 - **Object storage (S3/GCS):** Media and attachments with CDN in front and lifecycle policies for cold storage.
 - **Search index (OpenSearch/Elasticsearch):** Fed via event pipelines for full-text and structured queries.
@@ -115,30 +114,3 @@ Permission enforcement uses server defaults that inherit down to channels and ar
 - Integration tests for REST/GraphQL APIs and contract tests for WebSocket events (joins, messages, presence, typing).
 - End-to-end tests for onboarding, server creation, channel messaging, DMs, reactions/threads, media uploads, and moderation flows.
 - Load and soak tests for messaging fanout, WebSocket gateway capacity, and voice/video SFU throughput; chaos testing for resilience.
-
-## Backend Prototype (Node + Express)
-A lightweight gateway exposes modular routers that mirror the platform services:
-- **/auth** for registration, password/OAuth sign-in, token refresh, and session listing.
-- **/identity** for self profile, directory search, relationship toggles, and listing joined servers.
-- **/structure** for server/channel creation, invite lifecycle, and role definitions.
-- **/messaging** for message CRUD-like operations, reactions, and typing signals.
-- **/media** for upload intents, completion callbacks, and media policy limits.
-- **/search** for scoped message lookup with channel/user context.
-- **/moderation** for report intake and enforcement actions.
-- **/realtime** for ICE discovery and advertised WebSocket/WebRTC capabilities used by the WebSocket gateway and media pipeline.
-- **/graphql** for typed aggregation of servers, channels, and message sends (alongside REST).
-
-The gateway fronts public traffic with CORS + Helmet hardening, JSON shape enforcement, rate limits (global and auth-specific),
- and Zod-based schema validation on write paths before routing into the service modules.
-
-A WebSocket endpoint at `/ws` demonstrates the delivery fanout path, broadcasting messages to all connected clients.
-
-The browser prototype no longer injects synthetic "realtime" events; live updates are expected to flow from the backend WebSocket and service hooks instead of client-side timers.
-
-Role-aware endpoints now enforce the platform's permission surface: guests can only browse public servers/channels with limited history previews; registered users can post/react/thread/upload/search where their server roles allow; moderators/admins can manage channels, invites, roles, and apply moderation actions such as report resolutions and message takedowns.
-
-### Running locally
-1. Install dependencies: `npm install` (packages declared in `package.json`).
-2. Provide a MongoDB connection string via `MONGODB_URI` or default to `mongodb://localhost:27017/interact`.
-3. Start the gateway: `npm start` (defaults to port 4000) — startup waits for MongoDB connection and ensures collection validators are applied.
-4. Hit `/health` to verify liveness; use Authorization headers (`Bearer <token>`) from `/auth/login` or `/auth/register` for protected routes.
